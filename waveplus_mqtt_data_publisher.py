@@ -181,9 +181,18 @@ class DataPublisher():
         self.hostname = config['mqtt.hostname']
         self.port = config['mqtt.port']
 
-    def publish(self, data):
+    def publish(self, serial, data):
+        topic = self.topic
+        id = self.config.get('waveplus.' + serial + '.id')
+
+        if id is not None:
+            topic = self.topic + '/' + id
+            print('Wave Plus with serial {serial} has id {id}')
+
+        print('Publishing data: {data} to topic {topic}')
+
         publish.single(
-            self.topic,
+            topic,
             json.dumps(data),
             hostname=self.hostname,
             port=self.port,
@@ -192,29 +201,32 @@ class DataPublisher():
 
 
 Config = getConfig()
-SerialNumber = Config['waveplus.serial']
-waveplus = WavePlus(SerialNumber)
+serials = [serial.strip() for serial in Config['waveplus.serial'].split(',')]
 publisher = DataPublisher(Config)
 
-try:
-    print("Device serial number: %s" % SerialNumber)
+for serial in serials: 
+    waveplus = WavePlus(serial)
 
-    waveplus.connect()
-    sensors = waveplus.read()
+    try:
+        print("Retrieving data from Wave Plus with serial: %s" % serial)
 
-    data = {
-        "humidity": sensors.getValue(SENSOR_IDX_HUMIDITY),
-        "radon_short_term": sensors.getValue(SENSOR_IDX_RADON_SHORT_TERM_AVG),
-        "radon_long_term": sensors.getValue(SENSOR_IDX_RADON_LONG_TERM_AVG),
-        "temperature": sensors.getValue(SENSOR_IDX_TEMPERATURE),
-        "pressure": sensors.getValue(SENSOR_IDX_REL_ATM_PRESSURE),
-        "co2": sensors.getValue(SENSOR_IDX_CO2_LVL),
-        "voc": sensors.getValue(SENSOR_IDX_VOC_LVL)
-    }
+        waveplus.connect()
+        sensors = waveplus.read()
 
-    publisher.publish(data)
+        data = {
+            "serial": serial,
+            "humidity": sensors.getValue(SENSOR_IDX_HUMIDITY),
+            "radon_short_term": sensors.getValue(SENSOR_IDX_RADON_SHORT_TERM_AVG),
+            "radon_long_term": sensors.getValue(SENSOR_IDX_RADON_LONG_TERM_AVG),
+            "temperature": sensors.getValue(SENSOR_IDX_TEMPERATURE),
+            "pressure": sensors.getValue(SENSOR_IDX_REL_ATM_PRESSURE),
+            "co2": sensors.getValue(SENSOR_IDX_CO2_LVL),
+            "voc": sensors.getValue(SENSOR_IDX_VOC_LVL)
+        }
 
-    waveplus.disconnect()
+        publisher.publish(serial, data)
 
-finally:
-    waveplus.disconnect()
+        waveplus.disconnect()
+
+    finally:
+        waveplus.disconnect()

@@ -1,0 +1,35 @@
+# The serial number of the Wave Plus. Can be an array elements separated by comma to denote multiple
+# devices. See waveplus.<serial>.id for more details
+waveplus.serial=123456789
+
+
+# If multiple devices are scanned this can be used to provide human readable id to a device. This id 
+# is further used in the topic name when publishing.
+# waveplus.123456789.id=living-room 
+
+# Alternatively if there are multiple Wave Plus instance each must be defined
+# separately with a name. If both, waveplus.serial and waveplus.serial.xyz are defined
+# the simple version takes precedence
+# waveplus.serial.living-room=123456789
+# waveplus.serial.bedroom=234567890
+
+# The hostname or IP of the MQTT broker
+mqtt.hostname=192.168.0.2
+
+# The port number of the MQTT broker
+mqtt.port=1883
+
+# The username of the MQTT broker used for authentication
+mqtt.username=username
+
+# The password of the MQTT broker used for authentication
+mqtt.password=secret
+
+# The topic to which to publish. If ther are multiple Wave Plus instances, each will
+# post to a separate topic according to its id. For example if the Living Room Wave Plus
+# is defined as waveplus.123456789.id=living-room the data would be published to topic 
+# /home/airthings/waveplus/living-room 
+mqtt.topic=/home/airthings/waveplus
+
+# The client ID of this MQTT client
+mqtt.clientId=airthings-waveplus-mqtt-data-publisher
