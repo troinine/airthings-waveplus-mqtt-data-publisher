@@ -187,9 +187,9 @@ class DataPublisher():
 
         if id is not None:
             topic = self.topic + '/' + id
-            print('Wave Plus with serial {serial} has id {id}')
+            print('Wave Plus with serial {} has id {}'.format(serial, id))
 
-        print('Publishing data: {data} to topic {topic}')
+        print('Publishing data {} to topic {}'.format(data, topic))
 
         publish.single(
             topic,
