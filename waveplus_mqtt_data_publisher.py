@@ -77,33 +77,38 @@ class WavePlus():
         self.SN = SerialNumber
         self.uuid = UUID("b42e2a68-ade7-11e4-89d3-123b93f75cba")
 
-    def connect(self):
-        # Auto-discover device on first connection
-        if self.MacAddr is None:
-            scanner = Scanner().withDelegate(DefaultDelegate())
-            searchCount = 0
-            while self.MacAddr is None and searchCount < 50:
-                devices = scanner.scan(0.1)  # 0.1 seconds scan period
-                searchCount += 1
-                for dev in devices:
-                    ManuData = dev.getValueText(255)
-                    SN = parseSerialNumber(ManuData)
-                    if SN == self.SN:
-                        self.MacAddr = dev.addr  # exits the while loop on next conditional check
-                        break  # exit for loop
+    def connect(self, retry_limit=3):
+        attempt = 0
+        while attempt < retry_limit:
+            try:
+                if self.MacAddr is None:
+                    self._discover_device()
+                if self.periph is None:
+                    self.periph = Peripheral(self.MacAddr)
+                if self.curr_val_char is None:
+                    self.curr_val_char = self.periph.getCharacteristics(uuid=self.uuid)[0]
+                return
+            except (Exception) as e:
+                print(f"Connection attempt {attempt + 1} failed: {e}")
+                self.disconnect()
+                attempt += 1
+                time.sleep(1)
 
-            if self.MacAddr is None:
-                print("ERROR: Could not find device.")
-                print("GUIDE: (1) Please verify the serial number.")
-                print("       (2) Ensure that the device is advertising.")
-                print("       (3) Retry connection.")
-                sys.exit(1)
+        print("ERROR: Could not connect after several attempts.")
+        sys.exit(1)
 
-        # Connect to device
-        if self.periph is None:
-            self.periph = Peripheral(self.MacAddr)
-        if self.curr_val_char is None:
-            self.curr_val_char = self.periph.getCharacteristics(uuid=self.uuid)[0]
+    def _discover_device(self):
+        scanner = Scanner().withDelegate(DefaultDelegate())
+        for _ in range(50):
+            devices = scanner.scan(0.1)
+            for dev in devices:
+                ManuData = dev.getValueText(255)
+                SN = parseSerialNumber(ManuData)
+                if SN == self.SN:
+                    self.MacAddr = dev.addr
+                    return
+        print("ERROR: Could not find device after scanning.")
+        sys.exit(1)
 
     def read(self):
         if self.curr_val_char is None:
