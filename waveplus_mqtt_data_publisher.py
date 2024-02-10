@@ -179,7 +179,7 @@ class DataPublisher():
         self.password = config['mqtt.password']
         self.topic = config['mqtt.topic']
         self.hostname = config['mqtt.hostname']
-        self.port = config['mqtt.port']
+        self.port = int(config['mqtt.port'])
 
     def publish(self, serial, data):
         topic = self.topic
@@ -204,7 +204,7 @@ Config = getConfig()
 serials = [serial.strip() for serial in Config['waveplus.serial'].split(',')]
 publisher = DataPublisher(Config)
 
-for serial in serials: 
+for serial in serials:
     waveplus = WavePlus(serial)
 
     try:
